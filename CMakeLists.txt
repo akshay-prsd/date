@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.1.0 )
 
-project( date_prj )
+project( date )
 
 include( GNUInstallDirs )
 
@@ -45,6 +45,8 @@ set( HEADER_FILES
 	${HEADER_FOLDER}/date/tz_private.h
 )
 
+add_definitions(-DONLY_C_LOCALE=1)
+
 add_library( tz ${HEADER_FILES} ${SOURCE_FOLDER}/tz.cpp )
 
 if( USE_SYSTEM_TZ_DB )
@@ -76,7 +78,7 @@ if( BUILD_SHARED_LIBS )
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC")
 endif( )
 
-target_link_libraries( tz ${CMAKE_THREAD_LIBS_INIT} ${OPTIONAL_LIBRARIES} )
+target_link_libraries( tz ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPTIONAL_LIBRARIES} )
 
 # add include folders to the library and targets that consume it
 target_include_directories(tz PUBLIC
@@ -173,3 +175,31 @@ if ( ENABLE_DATE_TESTING )
         endif( )
     endforeach( )
 endif( )
+
+######################
+##CPack Debian Build##
+######################
+
+# Setting Patch Version
+SET(MAJOR_VERSION "2")
+SET(MINOR_VERSION "4")
+SET(PATCH_VERSION "1")
+
+# Setting the install directory. By default it is installed in usr/local/
+SET(CPACK_INSTALL_PREFIX "/usr") 
+SET(CPACK_SET_DESTDIR "on")
+# Debian package
+SET(CPACK_GENERATOR "DEB")
+SET(CPACK_PACKAGE_DESCRIPTION "Date library for Mission Control - MOAT")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A library for time zone conversions and date manipulations.")
+SET(CPACK_PACKAGE_VENDOR "Bossa Nova Robotics")
+SET(CPACK_PACKAGE_CONTACT "akshay.prasad@bossanova.com")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
+SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
+SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
+
+SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+
+INCLUDE(CPack)
