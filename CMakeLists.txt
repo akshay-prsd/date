@@ -1,6 +1,8 @@
-cmake_minimum_required( VERSION 3.1.0 )
+cmake_minimum_required( VERSION 2.8.12 )
 
 project( date )
+
+add_compile_options(-std=c++11 -Werror -Wall -Wextra -Wno-missing-field-initializers)
 
 include( GNUInstallDirs )
 
@@ -80,36 +82,19 @@ endif( )
 
 target_link_libraries( tz ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPTIONAL_LIBRARIES} )
 
-# add include folders to the library and targets that consume it
-target_include_directories(tz PUBLIC
-    $<BUILD_INTERFACE:
-        ${CMAKE_CURRENT_SOURCE_DIR}/${HEADER_FOLDER}
-    >
-    $<INSTALL_INTERFACE:
-        include
-    >
-)
-
-add_library(date_interface INTERFACE) # an interface (not a library), to enable automatic include_directory (for when just date.h, but not "tz.h and its lib" are needed)
-
-# add include folders to the INTERFACE and targets that consume it
-target_include_directories(date_interface INTERFACE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-    $<INSTALL_INTERFACE:include>
-)
-
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
     set(DEF_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/date)
 endif()
 
-install( TARGETS date_interface EXPORT dateConfig )
+install( TARGETS tz EXPORT dateConfig
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
+
 install( EXPORT dateConfig DESTINATION ${DEF_INSTALL_CMAKE_DIR} )
-install( TARGETS tz
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
+    
 install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/ )
 
 if ( ENABLE_DATE_TESTING )
