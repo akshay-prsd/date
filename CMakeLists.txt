@@ -8,21 +8,18 @@ include( GNUInstallDirs )
 
 find_package( Threads REQUIRED )
 
-# Override by setting on CMake command line.
-set( CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard whose features are requested.")
-
 option( USE_SYSTEM_TZ_DB "Use the operating system's timezone database" OFF )
 option( USE_TZ_DB_IN_DOT "Save the timezone database in the current folder" OFF )
 option( BUILD_SHARED_LIBS  "Build a shared version of library" OFF )
 option( ENABLE_DATE_TESTING "Enable unit tests" ON )
-option( DISABLE_STRING_VIEW "Disable string view" OFF )
+option( DISABLE_STRING_VIEW "Disable string view" ON )
 
 function( print_option OPT )
-	if ( NOT DEFINED PRINT_OPTION_CURR_${OPT} OR ( NOT PRINT_OPTION_CURR_${OPT} STREQUAL ${OPT} ) )
-		set( PRINT_OPTION_CURR_${OPT} ${${OPT}} CACHE BOOL "" )
-		mark_as_advanced(PRINT_OPTION_CURR_${OPT})
-		message( "# date: ${OPT} ${${OPT}}" )
-	endif( )
+    if ( NOT DEFINED PRINT_OPTION_CURR_${OPT} OR ( NOT PRINT_OPTION_CURR_${OPT} STREQUAL ${OPT} ) )
+        set( PRINT_OPTION_CURR_${OPT} ${${OPT}} CACHE BOOL "" )
+        mark_as_advanced(PRINT_OPTION_CURR_${OPT})
+        message( "# date: ${OPT} ${${OPT}}" )
+    endif( )
 endfunction( )
 
 print_option( USE_SYSTEM_TZ_DB )
@@ -37,14 +34,14 @@ set( TEST_FOLDER "test" )
 
 # This is needed so IDE's live MSVC show header files
 set( HEADER_FILES
-	${HEADER_FOLDER}/date/chrono_io.h
-	${HEADER_FOLDER}/date/date.h
-	${HEADER_FOLDER}/date/ios.h
-	${HEADER_FOLDER}/date/islamic.h
-	${HEADER_FOLDER}/date/iso_week.h
-	${HEADER_FOLDER}/date/julian.h
-	${HEADER_FOLDER}/date/tz.h
-	${HEADER_FOLDER}/date/tz_private.h
+    ${HEADER_FOLDER}/date/chrono_io.h
+    ${HEADER_FOLDER}/date/date.h
+    ${HEADER_FOLDER}/date/ios.h
+    ${HEADER_FOLDER}/date/islamic.h
+    ${HEADER_FOLDER}/date/iso_week.h
+    ${HEADER_FOLDER}/date/julian.h
+    ${HEADER_FOLDER}/date/tz.h
+    ${HEADER_FOLDER}/date/tz_private.h
 )
 
 add_definitions(-DONLY_C_LOCALE=1)
@@ -52,23 +49,25 @@ add_definitions(-DONLY_C_LOCALE=1)
 add_library( tz ${HEADER_FILES} ${SOURCE_FOLDER}/tz.cpp )
 
 if( USE_SYSTEM_TZ_DB )
-	target_compile_definitions( tz PRIVATE -DUSE_AUTOLOAD=0 )
-	target_compile_definitions( tz PRIVATE -DHAS_REMOTE_API=0 )
-	# cannot set USE_OS_TZDB to 1 on Windows
-	if( NOT WIN32 )
-		target_compile_definitions( tz PUBLIC -DUSE_OS_TZDB=1 )
-	endif( )
+    target_compile_definitions( tz PRIVATE -DUSE_AUTOLOAD=0 )
+    target_compile_definitions( tz PRIVATE -DHAS_REMOTE_API=0 )
+    # cannot set USE_OS_TZDB to 1 on Windows
+    if( NOT WIN32 )
+        target_compile_definitions( tz PUBLIC -DUSE_OS_TZDB=1 )
+    endif( )
+    target_include_directories( tz PRIVATE ${CURL_INCLUDE_DIRS} )
+    target_link_libraries( tz PRIVATE ${CURL_LIBRARIES} )
 else( )
-	target_compile_definitions( tz PRIVATE -DUSE_AUTOLOAD=1 )
-	target_compile_definitions( tz PRIVATE -DHAS_REMOTE_API=1 )
-	target_compile_definitions( tz PUBLIC -DUSE_OS_TZDB=0 )
-	find_package( CURL REQUIRED )
-	include_directories( SYSTEM ${CURL_INCLUDE_DIRS} )
-	set( OPTIONAL_LIBRARIES ${CURL_LIBRARIES} )
+    target_compile_definitions( tz PRIVATE -DUSE_AUTOLOAD=1 )
+    target_compile_definitions( tz PRIVATE -DHAS_REMOTE_API=1 )
+    target_compile_definitions( tz PUBLIC -DUSE_OS_TZDB=0 )
+    find_package( CURL REQUIRED )
+    include_directories( SYSTEM ${CURL_INCLUDE_DIRS} )
+    set( OPTIONAL_LIBRARIES ${CURL_LIBRARIES} )
 endif( )
 
 if( USE_TZ_DB_IN_DOT )
-	target_compile_definitions( tz PRIVATE -DINSTALL=. )
+    target_compile_definitions( tz PRIVATE -DINSTALL=. )
 endif( )
 
 if( DISABLE_STRING_VIEW )
@@ -82,6 +81,17 @@ endif( )
 
 target_link_libraries( tz ${CMAKE_THREAD_LIBS_INIT} ${CURL_LIBRARIES} ${OPTIONAL_LIBRARIES} )
 
+target_include_directories(tz PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    $<INSTALL_INTERFACE:include>
+)
+
+# ExternalProject_Add(proj
+#  DOWNLOAD_NAME tzdatatar
+#  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads
+
+#  URL https://data.iana.org/time-zones/releases/tzdata2018i.tar.gz)
+
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
 else()
@@ -94,6 +104,7 @@ install( TARGETS tz EXPORT dateConfig
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
 
 install( EXPORT dateConfig DESTINATION ${DEF_INSTALL_CMAKE_DIR} )
+
     
 install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/ )
 
