@@ -1,10 +1,11 @@
-cmake_minimum_required( VERSION 2.8.12 )
+cmake_minimum_required( VERSION 3.5.1 )
 
 project( date )
 
 add_compile_options(-std=c++11 -Werror -Wall -Wextra -Wno-missing-field-initializers)
 
 include( GNUInstallDirs )
+include(ExternalProject)
 
 find_package( Threads REQUIRED )
 
@@ -86,11 +87,21 @@ target_include_directories(tz PUBLIC
     $<INSTALL_INTERFACE:include>
 )
 
-# ExternalProject_Add(proj
-#  DOWNLOAD_NAME tzdatatar
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads
+# add_custom_target(TARGET tzdatabase
+#                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+#                       ${CMAKE_SOURCE_DIR}/tzdata-prefix/src/tzdata)
 
-#  URL https://data.iana.org/time-zones/releases/tzdata2018i.tar.gz)
+# Downloading IANA DB File
+ExternalProject_Add(tzdata
+  DOWNLOAD_DIR ${CMAKE_CURRENT_BINARY_DIR}/downloads
+  URL https://data.iana.org/time-zones/releases/tzdata2018i.tar.gz
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND "")
+  
+install( DIRECTORY ${CMAKE_BINARY_DIR}/tzdata-prefix/src/tzdata/ DESTINATION $ENV{HOME}/Downloads/tzdata/)
+
+add_dependencies(tz tzdata)
 
 if(WIN32 AND NOT CYGWIN)
     set(DEF_INSTALL_CMAKE_DIR CMake)
@@ -104,8 +115,6 @@ install( TARGETS tz EXPORT dateConfig
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
 
 install( EXPORT dateConfig DESTINATION ${DEF_INSTALL_CMAKE_DIR} )
-
-    
 install( DIRECTORY ${HEADER_FOLDER}/ DESTINATION include/ )
 
 if ( ENABLE_DATE_TESTING )
