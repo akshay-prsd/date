@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 3.5.1 )
 
 project( date )
 
-add_compile_options(-std=c++11 -Werror -Wall -Wextra -Wno-missing-field-initializers)
+add_compile_options(-std=c++11 -Wall -Wextra -Wno-missing-field-initializers)
 
 include( GNUInstallDirs )
 include(ExternalProject)
@@ -62,6 +62,7 @@ else( )
     target_compile_definitions( tz PRIVATE -DUSE_AUTOLOAD=1 )
     target_compile_definitions( tz PRIVATE -DHAS_REMOTE_API=1 )
     target_compile_definitions( tz PUBLIC -DUSE_OS_TZDB=0 )
+    target_compile_definitions( tz PUBLIC -DINSTALL=/usr )
     find_package( CURL REQUIRED )
     include_directories( SYSTEM ${CURL_INCLUDE_DIRS} )
     set( OPTIONAL_LIBRARIES ${CURL_LIBRARIES} )
@@ -99,7 +100,7 @@ ExternalProject_Add(tzdata
   BUILD_COMMAND ""
   INSTALL_COMMAND "")
   
-install( DIRECTORY ${CMAKE_BINARY_DIR}/tzdata-prefix/src/tzdata/ DESTINATION $ENV{HOME}/Downloads/tzdata/)
+install( DIRECTORY ${CMAKE_BINARY_DIR}/tzdata-prefix/src/tzdata/ DESTINATION tzdata/)
 
 add_dependencies(tz tzdata)
 
@@ -188,7 +189,8 @@ endif( )
 # Setting Patch Version
 SET(MAJOR_VERSION "2")
 SET(MINOR_VERSION "4")
-SET(PATCH_VERSION "1")
+SET(PATCH_VERSION "1xenial1")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 
 # Setting the install directory. By default it is installed in usr/local/
 SET(CPACK_INSTALL_PREFIX "/usr") 
@@ -202,9 +204,8 @@ SET(CPACK_PACKAGE_CONTACT "akshay.prasad@bossanova.com")
 SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
 SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
 SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
-SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
+SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
 SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
 
-SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 
 INCLUDE(CPack)
